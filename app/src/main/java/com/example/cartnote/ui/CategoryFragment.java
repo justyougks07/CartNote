@@ -46,13 +46,30 @@ public class CategoryFragment extends Fragment {
     }
 
     private void setupRecyclerView() {
-        List<Category> categories = dbHelper.getAllCategories();
-        adapter = new CategoryAdapter(getContext(), categories, category -> {
-            CartListFragment fragment = CartListFragment.newInstance(category.getId());
-            getParentFragmentManager().beginTransaction()
-                    .replace(R.id.fragment_container, fragment)
-                    .addToBackStack(null)
-                    .commit();
+        List<com.example.cartnote.model.Category> categories = dbHelper.getAllCategories();
+        adapter = new CategoryAdapter(getContext(), categories, new CategoryAdapter.OnCategoryClickListener() {
+            @Override
+            public void onCategoryClick(com.example.cartnote.model.Category category) {
+                CartListFragment fragment = CartListFragment.newInstance(category.getId());
+                getParentFragmentManager().beginTransaction()
+                        .replace(R.id.fragment_container, fragment)
+                        .addToBackStack(null)
+                        .commit();
+            }
+
+            @Override
+            public void onDeleteCategoryClick(com.example.cartnote.model.Category category) {
+                new androidx.appcompat.app.AlertDialog.Builder(requireContext())
+                        .setTitle("Hapus Kategori")
+                        .setMessage("Apakah Anda yakin ingin menghapus kategori '" + category.getName() + "'? Semua item di dalamnya juga akan terhapus.")
+                        .setPositiveButton("Hapus", (dialog, which) -> {
+                            dbHelper.deleteCategory(category.getId());
+                            adapter.updateData(dbHelper.getAllCategories());
+                            Toast.makeText(getContext(), "Kategori dihapus", Toast.LENGTH_SHORT).show();
+                        })
+                        .setNegativeButton("Batal", null)
+                        .show();
+            }
         });
         rvCategories.setLayoutManager(new LinearLayoutManager(getContext()));
         rvCategories.setAdapter(adapter);

@@ -200,4 +200,13 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.delete(TABLE_ITEMS, COLUMN_ID + " = ?", new String[]{String.valueOf(id)});
         db.close();
     }
+
+    public void deleteCategory(int categoryId) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        // Hapus semua item yang ada di kategori tersebut terlebih dahulu (Optional, agar data bersih)
+        db.delete(TABLE_ITEMS, COLUMN_CATEGORY_ID + " = ?", new String[]{String.valueOf(categoryId)});
+        // Hapus kategorinya
+        db.delete(TABLE_CATEGORIES, COLUMN_ID + " = ?", new String[]{String.valueOf(categoryId)});
+        db.close();
+    }
 }

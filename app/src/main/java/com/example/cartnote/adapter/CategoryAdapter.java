@@ -22,6 +22,7 @@ public class CategoryAdapter extends RecyclerView.Adapter<CategoryAdapter.Catego
 
     public interface OnCategoryClickListener {
         void onCategoryClick(Category category);
+        void onDeleteCategoryClick(Category category);
     }
 
     public CategoryAdapter(Context context, List<Category> categories, OnCategoryClickListener listener) {
@@ -43,6 +44,7 @@ public class CategoryAdapter extends RecyclerView.Adapter<CategoryAdapter.Catego
         holder.tvCategoryName.setText(category.getName());
         holder.tvCategoryDesc.setText(category.getDescription());
         holder.itemView.setOnClickListener(v -> listener.onCategoryClick(category));
+        holder.btnDeleteCategory.setOnClickListener(v -> listener.onDeleteCategoryClick(category));
     }
 
     @Override
@@ -57,11 +59,13 @@ public class CategoryAdapter extends RecyclerView.Adapter<CategoryAdapter.Catego
 
     public static class CategoryViewHolder extends RecyclerView.ViewHolder {
         TextView tvCategoryName, tvCategoryDesc;
+        android.widget.ImageButton btnDeleteCategory;
 
         public CategoryViewHolder(@NonNull View itemView) {
             super(itemView);
             tvCategoryName = itemView.findViewById(R.id.tvCategoryName);
             tvCategoryDesc = itemView.findViewById(R.id.tvCategoryDesc);
+            btnDeleteCategory = itemView.findViewById(R.id.btnDeleteCategory);
         }
     }
 }
