@@ -14,7 +14,7 @@ import java.util.List;
 public class DatabaseHelper extends SQLiteOpenHelper {
 
     private static final String DATABASE_NAME = "cart_db";
-    private static final int DATABASE_VERSION = 2;
+    private static final int DATABASE_VERSION = 3;
 
     private static final String TABLE_ITEMS = "cart_items";
     private static final String TABLE_CATEGORIES = "categories";
@@ -25,7 +25,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String COLUMN_PRICE = "price";
     private static final String COLUMN_IS_CHECKED = "isChecked";
     private static final String COLUMN_DEADLINE = "deadline";
-    private static final String COLUMN_IMAGE = "image_resource";
+    private static final String COLUMN_IMAGE_URI = "image_uri";
     private static final String COLUMN_CATEGORY_ID = "category_id";
 
     private static final String COLUMN_DESC = "description";
@@ -49,7 +49,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 + COLUMN_PRICE + " INTEGER,"
                 + COLUMN_IS_CHECKED + " INTEGER DEFAULT 0,"
                 + COLUMN_DEADLINE + " TEXT,"
-                + COLUMN_IMAGE + " INTEGER,"
+                + COLUMN_IMAGE_URI + " TEXT,"
                 + COLUMN_CATEGORY_ID + " INTEGER,"
                 + "FOREIGN KEY(" + COLUMN_CATEGORY_ID + ") REFERENCES " + TABLE_CATEGORIES + "(" + COLUMN_ID + "))";
         db.execSQL(CREATE_ITEMS_TABLE);
@@ -101,7 +101,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         values.put(COLUMN_PRICE, item.getPrice());
         values.put(COLUMN_IS_CHECKED, item.getIsChecked());
         values.put(COLUMN_DEADLINE, item.getDeadline());
-        values.put(COLUMN_IMAGE, item.getImageResource());
+        values.put(COLUMN_IMAGE_URI, item.getImageUri());
         values.put(COLUMN_CATEGORY_ID, item.getCategoryId());
         return db.insert(TABLE_ITEMS, null, values);
     }
@@ -119,7 +119,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 item.setPrice(cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_PRICE)));
                 item.setIsChecked(cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_IS_CHECKED)));
                 item.setDeadline(cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_DEADLINE)));
-                item.setImageResource(cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_IMAGE)));
+                item.setImageUri(cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_IMAGE_URI)));
                 item.setCategoryId(cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_CATEGORY_ID)));
                 items.add(item);
             } while (cursor.moveToNext());
@@ -143,7 +143,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 item.setPrice(cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_PRICE)));
                 item.setIsChecked(cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_IS_CHECKED)));
                 item.setDeadline(cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_DEADLINE)));
-                item.setImageResource(cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_IMAGE)));
+                item.setImageUri(cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_IMAGE_URI)));
                 item.setCategoryId(cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_CATEGORY_ID)));
                 items.add(item);
             } while (cursor.moveToNext());
@@ -160,7 +160,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         values.put(COLUMN_PRICE, item.getPrice());
         values.put(COLUMN_IS_CHECKED, item.getIsChecked());
         values.put(COLUMN_DEADLINE, item.getDeadline());
-        values.put(COLUMN_IMAGE, item.getImageResource());
+        values.put(COLUMN_IMAGE_URI, item.getImageUri());
         values.put(COLUMN_CATEGORY_ID, item.getCategoryId());
         return db.update(TABLE_ITEMS, values, COLUMN_ID + " = ?", new String[]{String.valueOf(item.getId())});
     }

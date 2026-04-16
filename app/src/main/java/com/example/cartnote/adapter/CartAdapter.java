@@ -9,6 +9,7 @@ import android.widget.CheckBox;
 import android.widget.ImageButton;
 import android.widget.TextView;
 
+import android.net.Uri;
 import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
@@ -61,8 +62,8 @@ public class CartAdapter extends RecyclerView.Adapter<CartAdapter.CartViewHolder
         holder.tvDeadline.setText("Deadline: " + item.getDeadline());
         holder.cbBought.setChecked(item.isCheckedBool());
 
-        if (item.getImageResource() != 0) {
-            holder.ivItemImage.setImageResource(item.getImageResource());
+        if (item.getImageUri() != null && !item.getImageUri().isEmpty()) {
+            holder.ivItemImage.setImageURI(Uri.parse(item.getImageUri()));
             holder.ivItemImage.setVisibility(View.VISIBLE);
         } else {
             holder.ivItemImage.setVisibility(View.GONE);

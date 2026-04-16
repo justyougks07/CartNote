@@ -1,14 +1,20 @@
 package com.example.cartnote.ui;
 
+import android.app.Activity;
 import android.app.DatePickerDialog;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
@@ -30,12 +36,30 @@ public class AddItemFragment extends Fragment {
     private int categoryId = -1;
 
     private TextInputEditText etName, etQuantity, etPrice, etDeadline;
-    private android.widget.Spinner spImage;
-    private Button btnSave, btnCancel;
+    private ImageView ivSelectedImage;
+    private Button btnPickImage, btnRemoveImage, btnSave, btnCancel;
     private TextView tvFormTitle;
     private DatabaseHelper dbHelper;
     private Calendar calendar = Calendar.getInstance();
     private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+    
+    private Uri selectedImageUri;
+
+    private final ActivityResultLauncher<Intent> imagePickerLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                if (result.getResultCode() == Activity.RESULT_OK && result.getData() != null) {
+                    selectedImageUri = result.getData().getData();
+                    // Take persistable URI permission if needed (optional but recommended for long term access)
+                    if (selectedImageUri != null) {
+                        getContext().getContentResolver().takePersistableUriPermission(selectedImageUri, 
+                                Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                        ivSelectedImage.setImageURI(selectedImageUri);
+                        btnRemoveImage.setVisibility(View.VISIBLE);
+                    }
+                }
+            }
+    );
 
     public static AddItemFragment newInstance(int categoryId) {
         AddItemFragment fragment = new AddItemFragment();
@@ -74,11 +98,13 @@ public class AddItemFragment extends Fragment {
         etQuantity = view.findViewById(R.id.etQuantity);
         etPrice = view.findViewById(R.id.etPrice);
         etDeadline = view.findViewById(R.id.etDeadline);
-        spImage = view.findViewById(R.id.spImage);
+        
+        ivSelectedImage = view.findViewById(R.id.ivSelectedImage);
+        btnPickImage = view.findViewById(R.id.btnPickImage);
+        btnRemoveImage = view.findViewById(R.id.btnRemoveImage);
+        
         btnSave = view.findViewById(R.id.btnSave);
         btnCancel = view.findViewById(R.id.btnCancel);
-
-        setupImageSpinner();
 
         if (existingItem != null) {
             tvFormTitle.setText("Edit Item");
@@ -87,14 +113,33 @@ public class AddItemFragment extends Fragment {
             etPrice.setText(String.valueOf(existingItem.getPrice()));
             etDeadline.setText(existingItem.getDeadline());
             btnSave.setText("Update Item");
-            setSelectedImage(existingItem.getImageResource());
+            
+            if (existingItem.getImageUri() != null) {
+                selectedImageUri = Uri.parse(existingItem.getImageUri());
+                ivSelectedImage.setImageURI(selectedImageUri);
+                btnRemoveImage.setVisibility(View.VISIBLE);
+            }
         }
 
         etDeadline.setOnClickListener(v -> showDatePicker());
+        btnPickImage.setOnClickListener(v -> pickImage());
+        btnRemoveImage.setOnClickListener(v -> {
+            selectedImageUri = null;
+            ivSelectedImage.setImageResource(android.R.drawable.ic_menu_gallery);
+            btnRemoveImage.setVisibility(View.GONE);
+        });
+        
         btnSave.setOnClickListener(v -> saveItem());
         btnCancel.setOnClickListener(v -> getParentFragmentManager().popBackStack());
 
         return view;
+    }
+
+    private void pickImage() {
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType("image/*");
+        imagePickerLauncher.launch(intent);
     }
 
     private void showDatePicker() {
@@ -104,36 +149,12 @@ public class AddItemFragment extends Fragment {
         }, calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH)).show();
     }
 
-    private void setupImageSpinner() {
-        String[] imageNames = {"Tanpa Gambar", "Beras", "Minyak", "Cabe Merah"};
-        android.widget.ArrayAdapter<String> adapter = new android.widget.ArrayAdapter<>(getContext(), android.R.layout.simple_spinner_item, imageNames);
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spImage.setAdapter(adapter);
-    }
-
-    private int getSelectedImageResource() {
-        int pos = spImage.getSelectedItemPosition();
-        switch (pos) {
-            case 1: return R.drawable.beras;
-            case 2: return R.drawable.minyak;
-            case 3: return R.drawable.cabemerah;
-            default: return 0;
-        }
-    }
-
-    private void setSelectedImage(int resId) {
-        if (resId == R.drawable.beras) spImage.setSelection(1);
-        else if (resId == R.drawable.minyak) spImage.setSelection(2);
-        else if (resId == R.drawable.cabemerah) spImage.setSelection(3);
-        else spImage.setSelection(0);
-    }
-
     private void saveItem() {
         String name = etName.getText().toString().trim();
         String qtyStr = etQuantity.getText().toString().trim();
         String priceStr = etPrice.getText().toString().trim();
         String deadline = etDeadline.getText().toString().trim();
-        int imageRes = getSelectedImageResource();
+        String imageUri = selectedImageUri != null ? selectedImageUri.toString() : null;
 
         if (name.isEmpty() || qtyStr.isEmpty() || priceStr.isEmpty() || deadline.isEmpty()) {
             Toast.makeText(getContext(), "Harap isi semua bidang", Toast.LENGTH_SHORT).show();
@@ -144,7 +165,7 @@ public class AddItemFragment extends Fragment {
         int price = Integer.parseInt(priceStr);
 
         if (existingItem == null) {
-            CartItem item = new CartItem(0, name, quantity, price, 0, deadline, imageRes, categoryId);
+            CartItem item = new CartItem(0, name, quantity, price, 0, deadline, imageUri, categoryId);
             dbHelper.insertItem(item);
             Toast.makeText(getContext(), "Item berhasil ditambahkan", Toast.LENGTH_SHORT).show();
         } else {
@@ -152,7 +173,7 @@ public class AddItemFragment extends Fragment {
             existingItem.setQuantity(quantity);
             existingItem.setPrice(price);
             existingItem.setDeadline(deadline);
-            existingItem.setImageResource(imageRes);
+            existingItem.setImageUri(imageUri);
             dbHelper.updateItem(existingItem);
             Toast.makeText(getContext(), "Item berhasil diperbarui", Toast.LENGTH_SHORT).show();
         }
